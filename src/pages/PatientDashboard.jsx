@@ -6,24 +6,36 @@ import "./PatientDashboard.css";
 function PatientDashboard() {
   const navigate = useNavigate();
   const [medicineDone, setMedicineDone] = useState(false);
-  
-  // For real reminders from caregiver
   const [reminders, setReminders] = useState([]);
   const [selectedReminder, setSelectedReminder] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [activeAlarm, setActiveAlarm] = useState(null);
   const audioRef = useRef(null);
+  const remindersRef = useRef([]);
 
   useEffect(() => {
     fetchReminders();
-    // Live update when caregiver adds
-    const channel = supabase.channel('pat-rem').on('postgres_changes',
-      { event: '*', schema: 'public', table: 'reminders', filter: 'family_id=eq.FAM001' },
-      () => fetchReminders()
-    ).subscribe();
+    
+    const channel = supabase
+      .channel('pat-rem')
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'reminders', filter: 'family_id=eq.FAM001' },
+        () => fetchReminders()
+      )
+      .subscribe();
 
-    const interval = setInterval(checkAlarms, 20000);
-    return () => { supabase.removeChannel(channel); clearInterval(interval); }
+    const interval = setInterval(() => {
+      checkAlarms();
+    }, 20000);
+
+    return () => {
+      supabase.removeChannel(channel);
+      clearInterval(interval);
+    };
+  }, []);
+
+  useEffect(() => {
+    remindersRef.current = reminders;
   }, [reminders]);
 
   const fetchReminders = async () => {
@@ -33,11 +45,13 @@ function PatientDashboard() {
 
   const checkAlarms = () => {
     const now = new Date();
-    const nowTime = now.getHours().toString().padStart(2,'0')+":"+now.getMinutes().toString().padStart(2,'0');
-    reminders.forEach(r=>{
+    const nowTime = String(now.getHours()).padStart(2,'0')+":"+String(now.getMinutes()).padStart(2,'0');
+    remindersRef.current.forEach(r=>{
       if(r.time === nowTime && !r.is_done && !activeAlarm){
         setActiveAlarm(r);
-        audioRef.current?.play().catch(()=>{});
+        if(audioRef.current){
+          audioRef.current.play().catch(()=>{});
+        }
       }
     });
   };
@@ -51,7 +65,7 @@ function PatientDashboard() {
     setMedicineDone(true);
     setShowModal(false);
     setActiveAlarm(null);
-    audioRef.current?.pause();
+    if(audioRef.current) audioRef.current.pause();
     fetchReminders();
     alert("Great job! ✅ Medicine taken - Caregiver will be notified");
   };
@@ -59,9 +73,8 @@ function PatientDashboard() {
   const remindLater = () => {
     setShowModal(false);
     setActiveAlarm(null);
-    audioRef.current?.pause();
+    if(audioRef.current) audioRef.current.pause();
     alert("⏰ Okay, will remind you in 5 minutes");
-    setTimeout(()=>{ if(selectedReminder){ setActiveAlarm(selectedReminder); audioRef.current?.play().catch(()=>{}) } }, 5*60*1000);
   };
 
   const nextReminder = reminders.find(r=>!r.is_done) || reminders[0];
@@ -70,7 +83,6 @@ function PatientDashboard() {
     <div className="patient-dashboard">
       <audio ref={audioRef} loop src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" />
 
-      {/* FULL SCREEN ALARM */}
       {activeAlarm && (
         <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'#ff3b30',zIndex:9999,display:'flex',flexDirection:'column',justifyContent:'center',alignItems:'center',color:'white',textAlign:'center',padding:'20px'}}>
           <div style={{fontSize:'70px'}}>⏰</div>
@@ -84,7 +96,6 @@ function PatientDashboard() {
         </div>
       )}
 
-      {/* MODAL FOR MEDICINE DETAILS - Attractive */}
       {showModal && selectedReminder && (
         <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',zIndex:1000,display:'flex',justifyContent:'center',alignItems:'center',padding:'20px'}} onClick={()=>setShowModal(false)}>
           <div style={{background:'white',borderRadius:'24px',width:'100%',maxWidth:'400px',padding:'24px',textAlign:'center'}} onClick={e=>e.stopPropagation()}>
@@ -100,89 +111,49 @@ function PatientDashboard() {
         </div>
       )}
 
-      {/* TOP - BACK BUTTONS */}
       <div className="dashboard-top-bar">
-        <button className="back-btn" onClick={() => navigate("/login")}>
-          ← Back to Login
-        </button>
-        <button className="home-btn" onClick={() => navigate("/")}>
-          🏠 Home
-        </button>
+        <button className="back-btn" onClick={() => navigate("/login")}>← Back to Login</button>
+        <button className="home-btn" onClick={() => navigate("/")}>🏠 Home</button>
       </div>
 
-      {/* HEADING */}
       <h1>Let's make today special!! 😊</h1>
       <p>How are you feeling today? Your Sathi is here for you.</p>
-
       <h2>What would you like to do today?</h2>
 
-      {/* 4 CARDS */}
       <div className="dashboard-cards">
-
-        {/* CARD 1 - Medicine - NOW CLICKABLE */}
         <div className="dashboard-card" onClick={()=>{ if(nextReminder){ setSelectedReminder(nextReminder); setShowModal(true) } else { alert("No reminders yet. Ask caregiver to add!") } }} style={{cursor:'pointer'}}>
           <div className="card-emoji">💊</div>
           <h3>Medicine Reminder</h3>
           <p>{nextReminder ? `${nextReminder.time} - ${nextReminder.title}` : "Next: 9 AM - Blood Pressure Tablet"}</p>
-
-          <button
-            className="card-btn"
-            onClick={(e) => { e.stopPropagation(); nextReminder ? markDone(nextReminder.id) : setMedicineDone(true)}}
-          >
+          <button className="card-btn" onClick={(e) => { e.stopPropagation(); nextReminder ? markDone(nextReminder.id) : setMedicineDone(true)}}>
             {medicineDone ? "✅ Completed" : "✅ Done"}
           </button>
-
-          <button
-            className="card-btn-white"
-            onClick={(e) => { e.stopPropagation(); setSelectedReminder(nextReminder); remindLater(); }}
-          >
+          <button className="card-btn-white" onClick={(e) => { e.stopPropagation(); if(nextReminder) setSelectedReminder(nextReminder); remindLater(); }}>
             ⏰ Remind Later
           </button>
           <small style={{color:'#aaa',marginTop:'8px',display:'block'}}>Click card to see details →</small>
         </div>
 
-        {/* CARD 2 - Memory Games - FIXED */}
         <div className="dashboard-card">
           <div className="card-emoji">🧠</div>
           <h3>Memory Games</h3>
           <p>Play fun games to keep your mind sharp</p>
-
-          <button
-            className="card-btn"
-            onClick={handleMemoryGames}
-          >
-            ▶ Play Now
-          </button>
+          <button className="card-btn" onClick={handleMemoryGames}>▶ Play Now</button>
         </div>
 
-        {/* CARD 3 - Talk to Sathi */}
         <div className="dashboard-card">
           <div className="card-emoji">🎙️</div>
           <h3>Talk to Sathi</h3>
           <p>"Aaj kaisa feel kar rahe ho?" - Talk in Hindi, Marathi</p>
-
-          <button
-            className="card-btn"
-            onClick={() => navigate("/voice-assistant")}
-          >
-            🎤 Start Talking
-          </button>
+          <button className="card-btn" onClick={() => navigate("/voice-assistant")}>🎤 Start Talking</button>
         </div>
 
-        {/* CARD 4 - Family Connect */}
         <div className="dashboard-card">
           <div className="card-emoji">👨‍👩‍👧</div>
           <h3>Family Connect</h3>
           <p>Your son Ramesh sent you a message ❤️</p>
-
-          <button
-            className="card-btn"
-            onClick={() => alert("Family messages coming soon!")}
-          >
-            ✉️ View Message
-          </button>
+          <button className="card-btn" onClick={() => alert("Family messages coming soon!")}>✉️ View Message</button>
         </div>
-
       </div>
     </div>
   );
