@@ -5,6 +5,7 @@ import LoginPage from "./pages/LoginPage";
 import PatientDashboard from "./pages/PatientDashboard";
 import VoiceAssistant from "./pages/VoiceAssistant";
 import CaregiverDashboard from "./pages/CaregiverDashboard";
+import MemoryCardGame from "./pages/MemoryCardGame";
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
       <Route path="/patient-dashboard" element={<PatientDashboard />} />
       <Route path="/caregiver-dashboard" element={<CaregiverDashboard />} />
       <Route path="/voice-assistant" element={<VoiceAssistant />} />
+      <Route path="/memory-game" element={<MemoryCardGame />} />
     </Routes>
   );
 }
