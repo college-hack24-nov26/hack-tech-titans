@@ -1,7 +1,10 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import "./Landing.css";
 
 function Landing() {
+  const navigate = useNavigate();
+
   return (
     <div className="landing-page">
       {/* NAVBAR */}
@@ -12,7 +15,9 @@ function Landing() {
           <a href="#">How it works</a>
           <a href="#">For Family</a>
         </div>
-        <button className="nav-btn">Get Started →</button>
+        <button className="nav-btn" onClick={() => navigate("/login")}>
+          Get Started →
+        </button>
       </nav>
 
       {/* HERO SECTION */}
@@ -29,8 +34,15 @@ function Landing() {
           </p>
 
           <div className="hero-buttons">
-            <button className="btn-primary">Get Started →</button>
-            <button className="btn-secondary">▶ Watch How it Works</button>
+            <button
+              className="btn-primary"
+              onClick={() => navigate("/login")}
+            >
+              Get Started →
+            </button>
+            <button className="btn-secondary">
+              ▶ Watch How it Works
+            </button>
           </div>
 
           <div className="stats">
