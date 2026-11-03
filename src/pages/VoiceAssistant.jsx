@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import "./VoiceAssistant.css";
 
 function VoiceAssistant() {
   const navigate = useNavigate();
@@ -46,23 +47,17 @@ function VoiceAssistant() {
         return;
       }
 
-      const marathiVoice = voices.find(
-        (voice) => voice.lang.toLowerCase() === "mr-in"
-      ) || voices.find(
-        (voice) => voice.lang.toLowerCase().startsWith("mr")
-      );
+      const marathiVoice =
+        voices.find((voice) => voice.lang.toLowerCase() === "mr-in") ||
+        voices.find((voice) => voice.lang.toLowerCase().startsWith("mr"));
 
-      const hindiVoice = voices.find(
-        (voice) => voice.lang.toLowerCase() === "hi-in"
-      ) || voices.find(
-        (voice) => voice.lang.toLowerCase().startsWith("hi")
-      );
+      const hindiVoice =
+        voices.find((voice) => voice.lang.toLowerCase() === "hi-in") ||
+        voices.find((voice) => voice.lang.toLowerCase().startsWith("hi"));
 
-      const englishVoice = voices.find(
-        (voice) => voice.lang.toLowerCase() === "en-in"
-      ) || voices.find(
-        (voice) => voice.lang.toLowerCase().startsWith("en")
-      );
+      const englishVoice =
+        voices.find((voice) => voice.lang.toLowerCase() === "en-in") ||
+        voices.find((voice) => voice.lang.toLowerCase().startsWith("en"));
 
       const speech = new SpeechSynthesisUtterance(text);
 
@@ -77,16 +72,10 @@ function VoiceAssistant() {
         } else if (hindiVoice) {
           speech.voice = hindiVoice;
           speech.lang = hindiVoice.lang;
-
-          setStatus(
-            "Marathi voice उपलब्ध नाही. Hindi voice वापरत आहे."
-          );
+          setStatus("Marathi voice उपलब्ध नाही. Hindi voice वापरत आहे.");
         } else {
           speech.lang = "mr-IN";
-
-          setStatus(
-            "Marathi audio voice तुमच्या browser मध्ये उपलब्ध नाही."
-          );
+          setStatus("Marathi audio voice तुमच्या browser मध्ये उपलब्ध नाही.");
         }
       } else {
         if (englishVoice) {
@@ -131,19 +120,16 @@ function VoiceAssistant() {
     try {
       setStatus("Sathi विचार करत आहे...");
 
-      const response = await fetch(
-        "http://localhost:5000/api/chat",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            message,
-            language,
-          }),
-        }
-      );
+      const response = await fetch("http://localhost:5000/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message,
+          language,
+        }),
+      });
 
       const data = await response.json();
 
@@ -156,7 +142,6 @@ function VoiceAssistant() {
       }
 
       setReply(data.reply);
-
       speak(data.reply);
 
     } catch (error) {
@@ -168,8 +153,7 @@ function VoiceAssistant() {
   // Start Microphone
   const startListening = () => {
     const SpeechRecognition =
-      window.SpeechRecognition ||
-      window.webkitSpeechRecognition;
+      window.SpeechRecognition || window.webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
       setStatus("Please use Google Chrome.");
@@ -203,7 +187,6 @@ function VoiceAssistant() {
 
     recognition.onerror = (event) => {
       console.error("Microphone Error:", event.error);
-
       setStatus("Microphone Error: " + event.error);
       setListening(false);
     };
@@ -216,7 +199,6 @@ function VoiceAssistant() {
       recognition.start();
     } catch (error) {
       console.error(error);
-
       setStatus("Microphone सुरू होऊ शकला नाही.");
       setListening(false);
     }
@@ -233,58 +215,184 @@ function VoiceAssistant() {
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        padding: "30px",
-        textAlign: "center",
-        background: "linear-gradient(135deg, #dbeafe, #fef3c7, #fce7f3)",
-      }}
-    >
-      <button onClick={() => navigate("/patient-dashboard")}>
-        ← Back to Dashboard
-      </button>
+    <div className="voice-page">
 
-      <h1>🍃 Talk to Sathi</h1>
+      {/* Header */}
+      <header className="voice-header">
+        <div className="voice-brand">
+          <span className="brand-icon">🍃</span>
+          <span>MindSaathi</span>
+        </div>
 
-      <p>Namaskar! मी तुमचा Sathi आहे. आपण गप्पा मारूया!</p>
-
-      <div style={{ margin: "20px" }}>
-        <label>Select Language: </label>
-
-        <select
-          value={language}
-          onChange={(e) => setLanguage(e.target.value)}
-          disabled={listening}
+        <button
+          className="back-dashboard-btn"
+          onClick={() => navigate("/patient-dashboard")}
         >
-          <option value="mr">Marathi</option>
-          <option value="en">English</option>
-        </select>
-      </div>
+          ← Back to Dashboard
+        </button>
+      </header>
 
-      <button onClick={listening ? stopListening : startListening}>
-        {listening ? "⏹ Stop Listening" : "🎤 Start Conversation"}
-      </button>
+      {/* Main Content */}
+      <main className="voice-main">
 
-      <h3>{status}</h3>
+        <div className="voice-welcome">
+          <span className="welcome-badge">
+            ● Sathi is here for you
+          </span>
 
-      {heard && (
-        <div>
-          <h3>You said:</h3>
-          <p>{heard}</p>
+          <h1>
+            Talk to Sathi <span>💙</span>
+          </h1>
+
+          <p>
+            Your friendly companion is always here to listen,
+            talk and make your day special.
+          </p>
         </div>
-      )}
 
-      {reply && (
-        <div>
-          <h3>🍃 Sathi says:</h3>
-          <p>{reply}</p>
+        {/* Voice Assistant Card */}
+        <section className="voice-card">
 
-          <button onClick={() => speak(reply)}>
-            🔊 Speak Again
-          </button>
-        </div>
-      )}
+          <div className="sathi-avatar">
+            <span>🍃</span>
+          </div>
+
+          <h2>Namaskar! मी तुमचा Sathi आहे.</h2>
+
+          <p className="voice-subtitle">
+            आज आपण काय गप्पा मारायच्या?
+          </p>
+
+          {/* Language Selector */}
+          <div className="language-section">
+            <label>Select your language</label>
+
+            <div className="language-options">
+
+              <button
+                className={
+                  language === "mr"
+                    ? "language-btn active"
+                    : "language-btn"
+                }
+                onClick={() => setLanguage("mr")}
+                disabled={listening}
+              >
+                🇮🇳 मराठी
+              </button>
+
+              <button
+                className={
+                  language === "en"
+                    ? "language-btn active"
+                    : "language-btn"
+                }
+                onClick={() => setLanguage("en")}
+                disabled={listening}
+              >
+                🇬🇧 English
+              </button>
+
+            </div>
+          </div>
+
+          {/* Microphone */}
+          <div className="microphone-section">
+
+            <button
+              className={
+                listening
+                  ? "mic-button listening"
+                  : "mic-button"
+              }
+              onClick={listening ? stopListening : startListening}
+              aria-label={
+                listening
+                  ? "Stop conversation"
+                  : "Start conversation"
+              }
+            >
+              {listening ? "⏹" : "🎤"}
+            </button>
+
+            <h3>
+              {listening
+                ? "I'm listening..."
+                : "Start a Conversation"}
+            </h3>
+
+            <p>
+              {listening
+                ? "Please speak. Sathi is listening to you."
+                : "Tap the microphone and start talking"}
+            </p>
+
+          </div>
+
+          {/* Status */}
+          <div className="voice-status">
+            <span
+              className={
+                listening
+                  ? "status-dot active-dot"
+                  : "status-dot"
+              }
+            ></span>
+
+            {status}
+          </div>
+
+        </section>
+
+        {/* Conversation Area */}
+        {(heard || reply) && (
+          <section className="conversation-card">
+
+            <h2>💬 Your Conversation</h2>
+
+            {heard && (
+              <div className="chat-message user-message">
+
+                <div className="chat-avatar">👤</div>
+
+                <div className="chat-content">
+                  <span>You said</span>
+                  <p>{heard}</p>
+                </div>
+
+              </div>
+            )}
+
+            {reply && (
+              <div className="chat-message sathi-message">
+
+                <div className="chat-avatar">🍃</div>
+
+                <div className="chat-content">
+                  <span>Sathi says</span>
+
+                  <p>{reply}</p>
+
+                  <button
+                    className="speak-again-btn"
+                    onClick={() => speak(reply)}
+                  >
+                    🔊 Speak Again
+                  </button>
+                </div>
+
+              </div>
+            )}
+
+          </section>
+        )}
+
+        {/* Footer */}
+        <footer className="voice-footer">
+          Made with ❤️ for you | MindSaathi
+        </footer>
+
+      </main>
     </div>
   );
 }

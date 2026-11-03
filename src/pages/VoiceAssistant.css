@@ -1,0 +1,396 @@
+
+/* ================================
+   MINDSAATHI - VOICE ASSISTANT
+================================ */
+
+.voice-page {
+  min-height: 100vh;
+  width: 100%;
+  padding: 25px 5%;
+  box-sizing: border-box;
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: linear-gradient(135deg, #eef6ff, #f0faf7, #fff9ed);
+  color: #26364d;
+}
+
+/* HEADER */
+
+.voice-header {
+  max-width: 1150px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+}
+
+.voice-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 23px;
+  font-weight: 800;
+  color: #245b91;
+}
+
+.brand-icon {
+  font-size: 30px;
+}
+
+.back-dashboard-btn {
+  padding: 11px 20px;
+  border: 1px solid #b8cee3;
+  border-radius: 30px;
+  background: white;
+  color: #285b8e;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.back-dashboard-btn:hover {
+  background: #e4f1ff;
+  transform: translateY(-2px);
+}
+
+/* MAIN SECTION */
+
+.voice-main {
+  max-width: 850px;
+  margin: 45px auto 0;
+  text-align: center;
+}
+
+/* WELCOME */
+
+.voice-welcome {
+  margin-bottom: 30px;
+}
+
+.welcome-badge {
+  display: inline-block;
+  padding: 9px 18px;
+  border-radius: 30px;
+  background: #e1f5ed;
+  color: #238568;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.voice-welcome h1 {
+  margin: 18px 0 10px;
+  font-size: clamp(30px, 5vw, 43px);
+  color: #234d78;
+  font-weight: 800;
+}
+
+.voice-welcome h1 span {
+  color: #3987c9;
+}
+
+.voice-welcome p {
+  color: #697b8e;
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+/* MAIN VOICE CARD */
+
+.voice-card {
+  max-width: 620px;
+  margin: 0 auto;
+  padding: 38px 25px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid #e2edf5;
+  border-radius: 28px;
+  box-shadow: 0 12px 35px rgba(45, 91, 130, 0.10);
+}
+
+.sathi-avatar {
+  width: 105px;
+  height: 105px;
+  margin: 0 auto 18px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #d8f4eb, #dcecff);
+  box-shadow: 0 8px 25px rgba(58, 135, 164, 0.15);
+}
+
+.sathi-avatar span {
+  font-size: 52px;
+}
+
+.voice-card h2 {
+  color: #294e73;
+  font-size: 23px;
+  margin-bottom: 8px;
+}
+
+.voice-subtitle {
+  color: #8292a2;
+  font-size: 15px;
+  margin-bottom: 28px;
+}
+
+/* LANGUAGE SELECTOR */
+
+.language-section {
+  margin: 25px 0;
+}
+
+.language-section label {
+  display: block;
+  margin-bottom: 12px;
+  color: #526b82;
+  font-weight: 600;
+}
+
+.language-options {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.language-btn {
+  min-width: 125px;
+  padding: 12px 20px;
+  border: 1px solid #d6e3ef;
+  border-radius: 30px;
+  background: #f7fbff;
+  color: #45647f;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.language-btn.active {
+  background: #2866a5;
+  color: white;
+  border-color: #2866a5;
+  box-shadow: 0 5px 15px rgba(40, 102, 165, 0.22);
+}
+
+.language-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.language-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* MICROPHONE */
+
+.microphone-section {
+  margin: 35px 0 20px;
+}
+
+.mic-button {
+  width: 90px;
+  height: 90px;
+  border: none;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #367fc0, #235b9b);
+  color: white;
+  font-size: 35px;
+  cursor: pointer;
+  box-shadow: 0 9px 25px rgba(35, 91, 155, 0.28);
+  transition: 0.3s;
+}
+
+.mic-button:hover {
+  transform: scale(1.08);
+}
+
+.mic-button.listening {
+  background: linear-gradient(135deg, #ed7777, #d94343);
+  animation: micPulse 1.5s infinite;
+}
+
+@keyframes micPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(237, 100, 100, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 18px rgba(237, 100, 100, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(237, 100, 100, 0);
+  }
+}
+
+.microphone-section h3 {
+  margin: 18px 0 7px;
+  color: #315d83;
+  font-size: 20px;
+}
+
+.microphone-section p {
+  color: #8292a2;
+  font-size: 14px;
+}
+
+/* STATUS */
+
+.voice-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  margin-top: 15px;
+  padding: 11px 18px;
+  border-radius: 30px;
+  background: #eff7fc;
+  color: #54718b;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.status-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #91a6b8;
+}
+
+.active-dot {
+  background: #24ad7c;
+  box-shadow: 0 0 8px rgba(36, 173, 124, 0.6);
+}
+
+/* CONVERSATION */
+
+.conversation-card {
+  max-width: 700px;
+  margin: 30px auto;
+  padding: 25px;
+  text-align: left;
+  background: white;
+  border: 1px solid #e3edf5;
+  border-radius: 22px;
+  box-shadow: 0 8px 25px rgba(45, 91, 130, 0.08);
+}
+
+.conversation-card h2 {
+  color: #315d83;
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+.chat-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  margin: 18px 0;
+  padding: 16px;
+  border-radius: 17px;
+}
+
+.user-message {
+  background: #edf5ff;
+}
+
+.sathi-message {
+  background: #edfaf4;
+}
+
+.chat-avatar {
+  font-size: 25px;
+}
+
+.chat-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.chat-content span {
+  color: #58758e;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.chat-content p {
+  margin: 7px 0;
+  color: #344b60;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+/* SPEAK AGAIN */
+
+.speak-again-btn {
+  margin-top: 10px;
+  padding: 10px 17px;
+  border: none;
+  border-radius: 25px;
+  background: #2d75ad;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.speak-again-btn:hover {
+  background: #205b91;
+  transform: translateY(-2px);
+}
+
+/* FOOTER */
+
+.voice-footer {
+  margin-top: 40px;
+  padding: 20px 0;
+  text-align: center;
+  color: #8496a6;
+  font-size: 13px;
+}
+
+/* MOBILE RESPONSIVE */
+
+@media (max-width: 600px) {
+  .voice-page {
+    padding: 18px 15px;
+  }
+
+  .voice-header {
+    flex-wrap: wrap;
+  }
+
+  .voice-brand {
+    font-size: 20px;
+  }
+
+  .back-dashboard-btn {
+    padding: 9px 13px;
+    font-size: 12px;
+  }
+
+  .voice-main {
+    margin-top: 35px;
+  }
+
+  .voice-card {
+    padding: 28px 17px;
+  }
+
+  .voice-card h2 {
+    font-size: 19px;
+  }
+
+  .language-options {
+    gap: 8px;
+  }
+
+  .language-btn {
+    min-width: 0;
+    padding: 11px 15px;
+    font-size: 13px;
+  }
+
+  .conversation-card {
+    padding: 17px;
+  }
+}
