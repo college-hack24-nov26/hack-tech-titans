@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./PatientDashboard.css";
 
 function PatientDashboard() {
   const navigate = useNavigate();
+  const [medicineDone, setMedicineDone] = useState(false);
 
   return (
     <div className="patient-dashboard">
@@ -32,8 +33,20 @@ function PatientDashboard() {
           <div className="card-emoji">💊</div>
           <h3>Medicine Reminder</h3>
           <p>Next: 9 AM - Blood Pressure Tablet</p>
-          <button className="card-btn">✅ Done</button>
-          <button className="card-btn-white">⏰ Remind Later</button>
+
+          <button
+            className="card-btn"
+            onClick={() => setMedicineDone(true)}
+          >
+            {medicineDone ? "✅ Completed" : "✅ Done"}
+          </button>
+
+          <button
+            className="card-btn-white"
+            onClick={() => alert("Reminder postponed!")}
+          >
+            ⏰ Remind Later
+          </button>
         </div>
 
         {/* CARD 2 - Memory Games */}
@@ -41,7 +54,13 @@ function PatientDashboard() {
           <div className="card-emoji">🧠</div>
           <h3>Memory Games</h3>
           <p>Play fun games to keep your mind sharp</p>
-          <button className="card-btn">▶ Play Now</button>
+
+          <button
+            className="card-btn"
+            onClick={() => alert("Memory Games coming soon!")}
+          >
+            ▶ Play Now
+          </button>
         </div>
 
         {/* CARD 3 - Talk to Sathi */}
@@ -49,7 +68,13 @@ function PatientDashboard() {
           <div className="card-emoji">🎙️</div>
           <h3>Talk to Sathi</h3>
           <p>"Aaj kaisa feel kar rahe ho?" - Talk in Hindi, Marathi</p>
-          <button className="card-btn">🎤 Start Talking</button>
+
+          <button
+            className="card-btn"
+            onClick={() => navigate("/voice-assistant")}
+          >
+            🎤 Start Talking
+          </button>
         </div>
 
         {/* CARD 4 - Family Connect */}
@@ -57,7 +82,13 @@ function PatientDashboard() {
           <div className="card-emoji">👨‍👩‍👧</div>
           <h3>Family Connect</h3>
           <p>Your son Ramesh sent you a message ❤️</p>
-          <button className="card-btn">✉️ View Message</button>
+
+          <button
+            className="card-btn"
+            onClick={() => alert("Family messages coming soon!")}
+          >
+            ✉️ View Message
+          </button>
         </div>
 
       </div>
