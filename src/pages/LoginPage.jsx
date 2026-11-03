@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "../supabaseClient"; // <-- 1. ADDED
 import "./LoginPage.css";
 
 function LoginPage() {
@@ -10,6 +11,7 @@ function LoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleRoleSelect = (role) => {
     setSelectedRole(role);
@@ -18,7 +20,8 @@ function LoginPage() {
     setPassword("");
   };
 
-  const handleLogin = (e) => {
+  // 2. REPLACED with REAL Supabase logic
+  const handleLogin = async (e) => {
     e.preventDefault();
 
     if (!email || !password) {
@@ -26,11 +29,46 @@ function LoginPage() {
       return;
     }
 
-    // ✅ FIXED: No more alert popup. Go to dashboard based on role.
-    if (selectedRole === "Patient") {
-      navigate("/patient-dashboard");
-    } else if (selectedRole === "Caregiver") {
-      navigate("/caregiver-dashboard");
+    setLoading(true);
+
+    try {
+      if (isSignUp) {
+        // --- SIGN UP ---
+        const { data, error } = await supabase.auth.signUp({
+          email: email,
+          password: password,
+          options: {
+            data: {
+              role: selectedRole, // Saves role (Patient/Caregiver)
+            }
+          }
+        });
+
+        if (error) throw error;
+
+        alert("Account created! Now you can Login. (Check your Supabase Users tab - user will appear now!)");
+        setIsSignUp(false); // Switch to Login mode
+
+      } else {
+        // --- LOGIN ---
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: email,
+          password: password,
+        });
+
+        if (error) throw error;
+
+        // Login Success -> Go to dashboard
+        if (selectedRole === "Patient") {
+          navigate("/patient-dashboard");
+        } else if (selectedRole === "Caregiver") {
+          navigate("/caregiver-dashboard");
+        }
+      }
+    } catch (error) {
+      alert(error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -128,7 +166,6 @@ function LoginPage() {
                   <input
                     type="text"
                     placeholder="Enter your full name"
-                    required
                   />
                 </div>
               )}
@@ -157,8 +194,8 @@ function LoginPage() {
                 />
               </div>
 
-              <button type="submit" className="auth-submit-btn">
-                {isSignUp ? "Create Account →" : "Login →"}
+              <button type="submit" className="auth-submit-btn" disabled={loading}>
+                {loading ? "Please wait..." : (isSignUp ? "Create Account →" : "Login →")}
               </button>
 
             </form>
