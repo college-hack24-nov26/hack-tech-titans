@@ -26,8 +26,12 @@ function LoginPage() {
       return;
     }
 
-    // Supabase authentication will be connected later.
-    alert(`${selectedRole} login form submitted!`);
+    // ✅ FIXED: No more alert popup. Go to dashboard based on role.
+    if (selectedRole === "Patient") {
+      navigate("/patient-dashboard");
+    } else if (selectedRole === "Caregiver") {
+      navigate("/caregiver-dashboard");
+    }
   };
 
   return (
