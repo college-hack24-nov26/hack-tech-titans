@@ -96,7 +96,7 @@ function LoginPage() {
               ✨ Your Care Journey Starts Here
             </div>
 
-            <h1>Welcome to MindSaathi!</h1>
+            <h1>Welcome to MindSathi!</h1>
 
             <p className="login-subtitle">
               Every journey is special. Tell us how you would like to continue.

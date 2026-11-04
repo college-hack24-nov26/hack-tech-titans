@@ -6,21 +6,26 @@ import VoiceAssistant from "./pages/VoiceAssistant";
 import CaregiverDashboard from "./pages/CaregiverDashboard";
 import MemoryCardGame from "./pages/MemoryCardGame";
 import GlobalMedicineAlarm from "./pages/GlobalMedicineAlarm";
+import HowItWorks from "./pages/HowItWorks";
 
 function App() {
-  return (
-    <>
-      <GlobalMedicineAlarm />
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/patient-dashboard" element={<PatientDashboard />} />
-        <Route path="/caregiver-dashboard" element={<CaregiverDashboard />} />
-        <Route path="/voice-assistant" element={<VoiceAssistant />} />
-        <Route path="/memory-game" element={<MemoryCardGame />} />
-      </Routes>
-    </>
-  );
+return (
+<> <GlobalMedicineAlarm />
+
+```
+  <Routes>
+    <Route path="/" element={<LandingPage />} />
+    <Route path="/login" element={<LoginPage />} />
+    <Route path="/patient-dashboard" element={<PatientDashboard />} />
+    <Route path="/caregiver-dashboard" element={<CaregiverDashboard />} />
+    <Route path="/voice-assistant" element={<VoiceAssistant />} />
+    <Route path="/memory-game" element={<MemoryCardGame />} />
+    <Route path="/how-it-works" element={<HowItWorks />} />
+  </Routes>
+</>
+
+
+);
 }
 
 export default App;

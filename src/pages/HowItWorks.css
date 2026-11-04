@@ -1,0 +1,272 @@
+.how-page {
+min-height: 100vh;
+background: #f6fbf7;
+color: #263c30;
+font-family: Arial, sans-serif;
+}
+
+.how-navbar {
+display: flex;
+justify-content: space-between;
+align-items: center;
+padding: 20px 7%;
+background: white;
+box-shadow: 0 3px 15px rgba(0,0,0,0.04);
+}
+
+.how-logo {
+font-size: 27px;
+font-weight: 800;
+color: #244b3c;
+cursor: pointer;
+}
+
+.how-logo span {
+color: #43a047;
+}
+
+.how-back {
+padding: 11px 20px;
+border: 1px solid #c8e6c9;
+border-radius: 25px;
+background: white;
+color: #2e7d32;
+font-weight: 600;
+cursor: pointer;
+}
+
+.how-hero {
+text-align: center;
+padding: 90px 20px 85px;
+background: linear-gradient(135deg, #e8f5e9, #f1f8e9, #e0f2f1);
+}
+
+.how-badge {
+display: inline-block;
+padding: 10px 20px;
+border-radius: 30px;
+background: white;
+color: #2e7d32;
+font-size: 14px;
+font-weight: 600;
+margin-bottom: 22px;
+}
+
+.how-hero h1 {
+font-size: clamp(36px, 6vw, 58px);
+margin: 0 0 20px;
+color: #244b3c;
+}
+
+.how-hero h1 span {
+color: #43a047;
+}
+
+.how-hero p {
+max-width: 680px;
+margin: auto;
+font-size: 17px;
+line-height: 1.8;
+color: #61756a;
+}
+
+.how-hero button,
+.how-family button {
+margin-top: 28px;
+padding: 15px 30px;
+border: none;
+border-radius: 30px;
+background: linear-gradient(135deg, #43a047, #244b3c);
+color: white;
+font-size: 15px;
+font-weight: 700;
+cursor: pointer;
+transition: 0.3s;
+}
+
+.how-hero button:hover,
+.how-family button:hover {
+transform: translateY(-3px);
+box-shadow: 0 8px 20px rgba(46,125,50,0.2);
+}
+
+.how-intro {
+max-width: 850px;
+margin: auto;
+padding: 75px 25px;
+text-align: center;
+}
+
+.how-intro h2,
+.how-section-heading h2 {
+font-size: 32px;
+color: #244b3c;
+margin-bottom: 18px;
+}
+
+.how-intro p {
+color: #68796d;
+font-size: 16px;
+line-height: 1.9;
+}
+
+.how-features,
+.how-steps {
+padding: 65px 7%;
+}
+
+.how-section-heading {
+text-align: center;
+margin-bottom: 40px;
+}
+
+.how-section-heading span,
+.how-family span {
+color: #43a047;
+font-size: 12px;
+font-weight: 800;
+letter-spacing: 2px;
+}
+
+.how-section-heading p {
+color: #849187;
+}
+
+.how-feature-grid {
+display: grid;
+grid-template-columns: repeat(3, 1fr);
+gap: 22px;
+}
+
+.how-feature-card {
+background: white;
+padding: 30px 25px;
+border-radius: 20px;
+border: 1px solid #edf3ed;
+box-shadow: 0 8px 25px rgba(0,0,0,0.035);
+transition: 0.3s;
+}
+
+.how-feature-card:hover {
+transform: translateY(-6px);
+box-shadow: 0 12px 30px rgba(46,125,50,0.1);
+}
+
+.how-feature-icon {
+width: 58px;
+height: 58px;
+border-radius: 16px;
+display: flex;
+justify-content: center;
+align-items: center;
+font-size: 29px;
+background: #e8f5e9;
+margin-bottom: 20px;
+}
+
+.how-feature-card h3,
+.how-step-card h3 {
+color: #244b3c;
+font-size: 19px;
+}
+
+.how-feature-card p,
+.how-step-card p {
+color: #78877c;
+line-height: 1.8;
+font-size: 14px;
+}
+
+.how-step-grid {
+display: grid;
+grid-template-columns: repeat(4, 1fr);
+gap: 18px;
+}
+
+.how-step-card {
+background: white;
+padding: 25px;
+border-radius: 18px;
+border: 1px solid #edf3ed;
+}
+
+.how-step-number {
+font-size: 32px;
+font-weight: 800;
+color: #43a047;
+margin-bottom: 15px;
+}
+
+.how-family {
+margin: 45px 7%;
+padding: 65px 30px;
+border-radius: 25px;
+text-align: center;
+background: linear-gradient(135deg, #e8f5e9, #e0f2f1);
+}
+
+.how-family h2 {
+font-size: 32px;
+color: #244b3c;
+max-width: 650px;
+margin: 18px auto;
+}
+
+.how-family p {
+max-width: 650px;
+margin: auto;
+line-height: 1.8;
+color: #61756a;
+}
+
+.how-footer {
+padding: 30px 15px;
+text-align: center;
+line-height: 2;
+color: #78947b;
+font-size: 14px;
+background: white;
+}
+
+@media(max-width: 900px) {
+.how-feature-grid {
+grid-template-columns: repeat(2, 1fr);
+}
+
+.how-step-grid {
+grid-template-columns: repeat(2, 1fr);
+}
+}
+
+@media(max-width: 600px) {
+.how-navbar {
+padding: 16px;
+}
+
+.how-logo {
+font-size: 21px;
+}
+
+.how-back {
+padding: 9px 12px;
+font-size: 12px;
+}
+
+.how-hero {
+padding: 65px 20px;
+}
+
+.how-feature-grid,
+.how-step-grid {
+grid-template-columns: 1fr;
+}
+
+.how-intro h2,
+.how-section-heading h2 {
+font-size: 26px;
+}
+
+.how-family h2 {
+font-size: 25px;
+}
+}
