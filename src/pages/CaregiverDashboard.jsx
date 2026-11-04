@@ -1,256 +1,198 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient";
 import { useNavigate } from "react-router-dom";
 
 export default function CaregiverDashboard() {
-  const [user, setUser] = useState(null);
   const navigate = useNavigate();
-  
   const [reminders, setReminders] = useState([]);
   const [title, setTitle] = useState("");
-  const [time, setTime] = useState("");
-  const [editingId, setEditingId] = useState(null);
 
-  useEffect(() => {
-    const getUser = async () => {
-      try {
-        const { data } = await supabase.auth.getUser();
-        setUser(data.user);
-      } catch (e) {
-        console.log(e);
-      }
-    };
-    getUser();
-    fetchReminders();
+  // New AM/PM states
+  const [hour, setHour] = useState("09");
+  const [minute, setMinute] = useState("00");
+  const [ampm, setAmpm] = useState("AM");
 
-    const channel = supabase
-      .channel('care-live-final')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'reminders', filter: 'family_id=eq.FAM001' }, 
-      () => fetchReminders())
-      .subscribe();
+  const [memTitle, setMemTitle] = useState("");
+  const [memNote, setMemNote] = useState("");
+  const [memImage, setMemImage] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [memories, setMemories] = useState([]);
 
-    return () => supabase.removeChannel(channel);
-  }, []);
+  useEffect(() => { fetchData(); }, []);
 
-  const fetchReminders = async () => {
-    const { data } = await supabase.from('reminders').select('*').eq('family_id','FAM001').order('created_at',{ascending:false});
-    if(data) setReminders(data);
+  const fetchData = async () => {
+    const { data: r } = await supabase.from('reminders').select('*').eq('family_id','FAM001').order('created_at',{ascending:false});
+    if(r) setReminders(r);
+    const { data: m } = await supabase.from('family_memories').select('*').eq('family_id','FAM001').order('created_at',{ascending:false});
+    if(m) setMemories(m);
   };
 
-  const handleAddOrUpdate = async () => {
-    if(!title || !time){
-      alert("⚠️ Please enter medicine name and time");
-      return;
-    }
-
-    if(editingId){
-      const { error } = await supabase.from('reminders').update({
-        title: title,
-        time: time,
-      }).eq('id', editingId);
-      
-      if(!error){
-        alert("✅ Updated! Patient will see new time instantly");
-        setEditingId(null);
-        setTitle(""); setTime("");
-        fetchReminders();
-      }
-    } else {
-      const { error } = await supabase.from('reminders').insert([{
-        family_id: 'FAM001',
-        title: title,
-        time: time,
-        type: 'Medicine',
-        is_done: false
-      }]);
-      
-      if(error){
-        alert("Error: "+error.message);
-      } else {
-        alert(`✅ Added: ${time} - ${title} \nPatient dashboard will show instantly!`);
-        setTitle(""); setTime("");
-        fetchReminders();
-      }
-    }
+  // Convert 12h AM/PM to 24h for saving
+  const get24hTime = () => {
+    let h = parseInt(hour);
+    if (ampm === "PM" && h !== 12) h += 12;
+    if (ampm === "AM" && h === 12) h = 0;
+    return `${String(h).padStart(2,'0')}:${minute}`;
   };
 
-  const startEdit = (r) => {
-    setEditingId(r.id);
-    setTitle(r.title);
-    setTime(r.time);
-    window.scrollTo({top:0, behavior:'smooth'});
+  // Convert 24h to 12h for display
+  const formatDisplayTime = (time24) => {
+    if(!time24) return "";
+    let [h, m] = time24.split(":").map(Number);
+    const ampm = h >= 12 ? "PM" : "AM";
+    h = h % 12 || 12;
+    return `${h}:${String(m).padStart(2,'0')} ${ampm}`;
   };
 
-  const cancelEdit = () => {
-    setEditingId(null);
-    setTitle(""); setTime("");
+  const addReminder = async () => {
+    if(!title) return alert("Enter title");
+    const finalTime = get24hTime();
+    await supabase.from('reminders').insert([{ family_id:'FAM001', title, time: finalTime, is_done:false }]);
+    setTitle(""); fetchData();
   };
 
   const deleteReminder = async (id) => {
-    if(!window.confirm("Delete this reminder?")) return;
-    await supabase.from('reminders').delete().eq('id',id);
-    fetchReminders();
+    await supabase.from('reminders').delete().eq('id', id);
+    fetchData();
   };
 
-  const memories = [
-    { title: "Diwali Family", img: "https://images.unsplash.com/photo-1605600659873-d808a13e4d2a?w=400" },
-    { title: "Grandson Birthday", img: "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=400" }
-  ];
-
-  const activeCount = reminders.filter(r=>!r.is_done).length;
-  const doneCount = reminders.filter(r=>r.is_done).length;
+  const uploadMemory = async () => {
+    if(!memTitle || !memImage) return alert("Add Title and Photo");
+    setUploading(true);
+    try {
+      const fileName = Date.now() + "_" + memImage.name;
+      const { error } = await supabase.storage.from('family-photos').upload(fileName, memImage);
+      if(error) throw error;
+      const { data } = supabase.storage.from('family-photos').getPublicUrl(fileName);
+      await supabase.from('family_memories').insert([{ family_id:'FAM001', title: memTitle, note: memNote, image_url: data.publicUrl }]);
+      setMemTitle(""); setMemNote(""); setMemImage(null); fetchData();
+    } catch(e){ alert(e.message); }
+    setUploading(false);
+  };
 
   return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap');
-        .caregiver-wrap{font-family:'Outfit',sans-serif;background:#f6fbf7;min-height:100vh;padding:24px;color:#1a2e1a}
-        .top-nav{background:white;border-radius:18px;padding:16px 24px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 4px 20px rgba(46,125,50,0.06);margin-bottom:24px}
-        .top-nav h2{margin:0;font-weight:700;color:#2e7d32;display:flex;gap:10px;align-items:center}
-        .top-nav span{background:#e8f5e9;padding:6px 14px;border-radius:20px;font-size:13px;color:#2e7d32;font-weight:500}
-        .back-btn{background:white;border:1.5px solid #c8e6c9;color:#2e7d32;padding:8px 16px;border-radius:10px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;transition:0.2s;font-family:'Outfit'}
-        .back-btn:hover{background:#e8f5e9;transform:translateX(-2px)}
-        .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:24px}
-        .stat{background:white;border-radius:20px;padding:22px;box-shadow:0 8px 30px rgba(0,0,0,0.04);border:1px solid #f0f5f0}
-        .stat-icon{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:14px}
-        .stat.green .stat-icon{background:#e8f5e9} .stat.orange .stat-icon{background:#fff3e0} .stat.blue .stat-icon{background:#e3f2fd}
-        .stat h4{margin:0;font-size:12px;color:#78947b;font-weight:600;letter-spacing:0.5px}
-        .stat h1{margin:8px 0 4px;font-size:36px;font-weight:700} .stat p{margin:0;font-size:13px;color:#a0b5a2}
-        .main-grid{display:grid;grid-template-columns:1.1fr 0.9fr;gap:20px}
-        .glass-card{background:white;border-radius:20px;padding:24px;box-shadow:0 8px 30px rgba(0,0,0,0.04);border:1px solid #eef4ee}
-        .glass-card h3{margin:0 0 18px;font-size:18px;font-weight:600;display:flex;align-items:center;gap:10px}
-        .input-modern{width:100%;padding:13px 14px;border:1.5px solid #e8efe8;border-radius:12px;font-size:15px;outline:none;box-sizing:border-box;margin-bottom:12px;font-family:'Outfit'}
-        .input-modern:focus{border-color:#43a047;background:#fcfffc}
-        .btn-primary{width:100%;padding:13px;border:none;border-radius:12px;font-weight:700;font-size:14px;cursor:pointer;font-family:'Outfit';transition:0.2s}
-        .btn-primary:active{transform:scale(0.98)}
-        .btn-green{background:linear-gradient(135deg,#43a047,#2e7d32);color:white}
-        .btn-orange{background:linear-gradient(135deg,#ff8a65,#ff7043);color:white}
-        .list-item{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:#f9fdf9;border-radius:12px;margin-bottom:8px;font-size:14px;border:1px solid #f0f5f0}
-        .badge{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600}
-        .badge-time{background:#fff;border:1px solid #e0e0e0;color:#555}
-        .upload-zone{border:2px dashed #c8e6c9;border-radius:14px;padding:18px;text-align:center;background:#fcfffc;margin-bottom:12px}
-        .memory-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
-        .memory{border-radius:14px;overflow:hidden;background:white;border:1px solid #eee}
-        .memory img{width:100%;height:110px;object-fit:cover;display:block}
-        .memory span{padding:8px 10px;display:block;font-size:13px;font-weight:500}
-        @media(max-width:900px){.stats-row,.main-grid{grid-template-columns:1fr} .caregiver-wrap{padding:14px}}
-      `}</style>
-
-      <div className="caregiver-wrap">
-        <div style={{display:'flex', alignItems:'center', gap:'12px', marginBottom:'16px'}}>
-          <button className="back-btn" onClick={() => navigate(-1)}>← Back</button>
-          <span style={{fontSize:'14px', color:'#78947b'}}>Go back</span>
-          <button className="back-btn" style={{marginLeft:'auto', background:'#244B3C', color:'white', border:'none'}} onClick={() => navigate("/patient-dashboard")}>👁️ See Patient View →</button>
-        </div>
-
-        <div className="top-nav">
-          <h2>🍃 MindSathi Care</h2>
-          <span>● Live FAM001 • {user?.email ? user.email.split('@')[0] : 'Caregiver'}</span>
-        </div>
-
-        {/* ✅ NEW: Patient Status Message */}
-        <div style={{
-          background: reminders.length===0 ? 'white' : activeCount===0 ? '#e8f5e9' : '#fff8e1',
-          border: reminders.length===0 ? '1.5px solid #eef4ee' : activeCount===0 ? '2px solid #43a047' : '2px solid #ffb74d',
-          borderRadius:'16px', padding:'14px 20px', marginBottom:'20px', display:'flex', alignItems:'center', gap:'12px'
-        }}>
-          <div style={{fontSize:'28px'}}>{reminders.length===0 ? '📭' : activeCount===0 ? '🎉' : '⏳'}</div>
+    <div style={{minHeight:'100vh', background:'#f8fafc', fontFamily:'Inter, system-ui, sans-serif'}}>
+      {/* Top Bar with little color */}
+      <div style={{background:'white', borderBottom:'1px solid #e2e8f0', padding:'14px 24px', display:'flex', justifyContent:'space-between', alignItems:'center', position:'sticky', top:0, zIndex:10}}>
+        <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
+          <div style={{width:'34px', height:'34px', background:'linear-gradient(135deg,#4f46e5,#06b6d4)', color:'white', borderRadius:'10px', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'800', fontSize:'16px'}}>M</div>
           <div>
-            {reminders.length===0 ? (
-              <><b>No reminders yet</b><br/><span style={{fontSize:'13px', color:'#78947b'}}>Add medicine name and time below - Patient will see instantly</span></>
-            ) : activeCount===0 ? (
-              <><b style={{color:'#2e7d32'}}>All Done! Patient took all {doneCount} medicines today ✅</b><br/><span style={{fontSize:'13px', color:'#556b56'}}>Great job! Your care is working ❤️</span></>
-            ) : (
-              <><b style={{color:'#e65100'}}>Patient has {activeCount} pending, {doneCount} done</b><br/><span style={{fontSize:'13px', color:'#78947b'}}>{activeCount} medicines still need to be taken today</span></>
+            <div style={{fontWeight:'700', fontSize:'14px', color:'#0f172a'}}>MindSaathi</div>
+            <div style={{fontSize:'11px', color:'#64748b'}}>Caregiver Console • <span style={{color:'#4f46e5', fontWeight:'600'}}>FAM001</span></div>
+          </div>
+        </div>
+        <button onClick={()=>navigate("/")} style={{fontSize:'13px', padding:'8px 14px', borderRadius:'8px', border:'1px solid #e2e8f0', background:'white', cursor:'pointer'}}>← Home</button>
+      </div>
+
+      <div style={{maxWidth:'1100px', margin:'0 auto', padding:'28px 24px', display:'grid', gridTemplateColumns:'1.2fr 0.8fr', gap:'24px'}}>
+        
+        {/* LEFT */}
+        <div>
+          {/* Stats with soft colors */}
+          <div style={{display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'12px', marginBottom:'24px'}}>
+            <div style={{background:'linear-gradient(135deg,#eef2ff,#ffffff)', border:'1px solid #e0e7ff', borderRadius:'12px', padding:'16px'}}>
+              <div style={{fontSize:'11px', color:'#6366f1', fontWeight:'600', letterSpacing:'0.5px'}}>TOTAL</div>
+              <div style={{fontSize:'24px', fontWeight:'800', color:'#1e293b'}}>{reminders.length}</div>
+              <div style={{fontSize:'11px', color:'#64748b'}}>Reminders</div>
+            </div>
+            <div style={{background:'linear-gradient(135deg,#fef3c7,#ffffff)', border:'1px solid #fde68a', borderRadius:'12px', padding:'16px'}}>
+              <div style={{fontSize:'11px', color:'#d97706', fontWeight:'600'}}>PENDING</div>
+              <div style={{fontSize:'24px', fontWeight:'800', color:'#1e293b'}}>{reminders.filter(r=>!r.is_done).length}</div>
+              <div style={{fontSize:'11px', color:'#64748b'}}>Today</div>
+            </div>
+            <div style={{background:'linear-gradient(135deg,#dcfce7,#ffffff)', border:'1px solid #bbf7d0', borderRadius:'12px', padding:'16px'}}>
+              <div style={{fontSize:'11px', color:'#16a34a', fontWeight:'600'}}>MEMORIES</div>
+              <div style={{fontSize:'24px', fontWeight:'800', color:'#1e293b'}}>{memories.length}</div>
+              <div style={{fontSize:'11px', color:'#64748b'}}>Photos</div>
+            </div>
+          </div>
+
+          {/* Care Plan */}
+          <div style={{background:'white', border:'1px solid #e2e8f0', borderRadius:'16px', padding:'24px', boxShadow:'0 1px 3px rgba(0,0,0,0.05)'}}>
+            <div style={{display:'flex', justifyContent:'space-between', marginBottom:'18px'}}>
+              <h3 style={{margin:0, fontSize:'16px', fontWeight:'700', color:'#0f172a'}}>Daily Care Plan</h3>
+              <span style={{fontSize:'11px', background:'#eef2ff', color:'#4f46e5', padding:'4px 10px', borderRadius:'20px', fontWeight:'600'}}>⏰ With Alarm</span>
+            </div>
+            
+            <label style={{fontSize:'12px', fontWeight:'600', color:'#334155'}}>Task Title</label>
+            <input value={title} onChange={e=>setTitle(e.target.value)} placeholder="e.g. Morning medicine, Breakfast, Walk" style={{width:'100%', padding:'11px 12px', margin:'6px 0 14px', borderRadius:'10px', border:'1px solid #cbd5e1', fontSize:'14px', boxSizing:'border-box'}} />
+            
+            <label style={{fontSize:'12px', fontWeight:'600', color:'#334155'}}>Time (with AM/PM)</label>
+            <div style={{display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'8px', margin:'6px 0 14px'}}>
+              <select value={hour} onChange={e=>setHour(e.target.value)} style={{padding:'11px', borderRadius:'10px', border:'1px solid #cbd5e1', fontSize:'14px', background:'white', fontWeight:'600'}}>
+                {Array.from({length:12},(_,i)=>{ const h=String(i+1).padStart(2,'0'); return <option key={h} value={h}>{h}</option>})}
+              </select>
+              <select value={minute} onChange={e=>setMinute(e.target.value)} style={{padding:'11px', borderRadius:'10px', border:'1px solid #cbd5e1', fontSize:'14px', background:'white', fontWeight:'600'}}>
+                {["00","05","10","15","20","25","30","35","40","45","50","55"].map(m=><option key={m} value={m}>{m}</option>)}
+                {/* All minutes also allowed */}
+                {Array.from({length:60},(_,i)=>{ const mm=String(i).padStart(2,'0'); if(!["00","05","10","15","20","25","30","35","40","45","50","55"].includes(mm)) return <option key={mm} value={mm}>{mm}</option>})}
+              </select>
+              <select value={ampm} onChange={e=>setAmpm(e.target.value)} style={{padding:'11px', borderRadius:'10px', border:'1px solid #cbd5e1', fontSize:'14px', background: ampm==="AM" ? '#fef3c7' : '#e0e7ff', fontWeight:'700', color: ampm==="AM" ? '#92400e' : '#4338ca'}}>
+                <option value="AM">AM</option>
+                <option value="PM">PM</option>
+              </select>
+            </div>
+            <div style={{fontSize:'11px', color:'#64748b', marginBottom:'8px'}}>Selected: <b style={{color:'#0f172a'}}>{hour}:{minute} {ampm}</b> → Saved as {get24hTime()}</div>
+            
+            <button onClick={addReminder} style={{width:'100%', padding:'12px', background:'#0f172a', color:'white', border:'none', borderRadius:'10px', fontWeight:'600', fontSize:'14px', cursor:'pointer'}}>
+              + Add to Schedule
+            </button>
+
+            <div style={{marginTop:'20px', borderTop:'1px solid #f1f5f9', paddingTop:'16px'}}>
+              <div style={{fontSize:'11px', fontWeight:'700', color:'#94a3b8', marginBottom:'10px', letterSpacing:'0.5px'}}>TODAY'S SCHEDULE</div>
+              {reminders.map(r=>(
+                <div key={r.id} style={{display:'flex', justifyContent:'space-between', alignItems:'center', padding:'10px 0', borderBottom:'1px solid #f8fafc'}}>
+                  <div style={{display:'flex', gap:'10px', alignItems:'center'}}>
+                    <div style={{fontSize:'12px', fontWeight:'700', background: r.is_done ? '#dcfce7' : '#e0e7ff', color: r.is_done ? '#166534' : '#4338ca', padding:'4px 10px', borderRadius:'8px', minWidth:'70px', textAlign:'center'}}>{formatDisplayTime(r.time)}</div>
+                    <div style={{fontSize:'14px', color:'#0f172a', fontWeight:'500'}}>{r.title}</div>
+                  </div>
+                  <button onClick={()=>deleteReminder(r.id)} style={{fontSize:'12px', color:'#94a3b8', background:'none', border:'none', cursor:'pointer'}}>Remove</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT */}
+        <div>
+          <div style={{background:'white', border:'1px solid #e2e8f0', borderRadius:'16px', padding:'24px', boxShadow:'0 1px 3px rgba(0,0,0,0.05)'}}>
+            <h3 style={{margin:'0 0 4px', fontSize:'16px', fontWeight:'700', color:'#0f172a'}}>Family Connect</h3>
+            <p style={{margin:'0 0 18px', fontSize:'12px', color:'#64748b'}}>Upload photos that patient will see instantly.</p>
+            
+            <label style={{fontSize:'12px', fontWeight:'600', color:'#334155'}}>Memory Title</label>
+            <input value={memTitle} onChange={e=>setMemTitle(e.target.value)} placeholder="e.g. Diwali Dinner 2025" style={{width:'100%', padding:'11px 12px', margin:'6px 0 12px', borderRadius:'10px', border:'1px solid #cbd5e1', fontSize:'14px', boxSizing:'border-box'}} />
+            
+            <label style={{fontSize:'12px', fontWeight:'600', color:'#334155'}}>Note</label>
+            <input value={memNote} onChange={e=>setMemNote(e.target.value)} placeholder="We love you ❤️" style={{width:'100%', padding:'11px 12px', margin:'6px 0 12px', borderRadius:'10px', border:'1px solid #cbd5e1', fontSize:'14px', boxSizing:'border-box'}} />
+            
+            <div style={{border:'1px dashed #cbd5e1', borderRadius:'12px', padding:'16px', textAlign:'center', margin:'6px 0 14px', background: memImage ? '#f0fdf4' : '#f8fafc'}}>
+              <input type="file" accept="image/*" onChange={e=>setMemImage(e.target.files[0])} id="fileInput" style={{display:'none'}} />
+              <label htmlFor="fileInput" style={{cursor:'pointer', fontSize:'13px', fontWeight:'600', color: memImage ? '#16a34a' : '#334155'}}>
+                {memImage ? `✅ ${memImage.name}` : '📷 Click to upload photo'}
+              </label>
+            </div>
+
+            <button onClick={uploadMemory} disabled={uploading} style={{width:'100%', padding:'11px', background:'linear-gradient(135deg,#4f46e5,#06b6d4)', color:'white', border:'none', borderRadius:'10px', fontWeight:'600', fontSize:'14px', cursor:'pointer'}}>
+              {uploading ? 'Uploading...' : 'Upload Memory'}
+            </button>
+
+            {memories.length > 0 && (
+              <div style={{marginTop:'18px'}}>
+                <div style={{fontSize:'11px', fontWeight:'700', color:'#94a3b8', marginBottom:'10px'}}>RECENT • {memories.length}</div>
+                {memories.map(m=>(
+                  <div key={m.id} style={{display:'flex', gap:'10px', padding:'8px', border:'1px solid #f1f5f9', borderRadius:'10px', marginBottom:'8px'}}>
+                    <img src={m.image_url} style={{width:'42px', height:'42px', borderRadius:'8px', objectFit:'cover'}} />
+                    <div style={{flex:1, minWidth:0}}>
+                      <div style={{fontSize:'13px', fontWeight:'600', color:'#0f172a', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}>{m.title}</div>
+                      <div style={{fontSize:'11px', color:'#64748b'}}>{m.note?.substring(0,30) || 'No note'}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         </div>
-
-        <div className="stats-row">
-          <div className="stat green">
-            <div className="stat-icon">🎮</div>
-            <h4>GAMES COMPLETED</h4>
-            <h1>12</h1>
-            <p>+3 today • Patient is active</p>
-          </div>
-          <div className="stat orange">
-            <div className="stat-icon">⏰</div>
-            <h4>ACTIVE REMINDERS</h4>
-            <h1>{activeCount}</h1>
-            <p>{doneCount} done • {reminders.length} total FAM001</p>
-          </div>
-          <div className="stat blue">
-            <div className="stat-icon">📸</div>
-            <h4>FAMILY MEMORIES</h4>
-            <h1>8</h1>
-            <p>Shared with love</p>
-          </div>
-        </div>
-
-        <div className="main-grid">
-          <div className="glass-card">
-            <h3>{editingId ? "✏️ Update Reminder" : "⏰ Set Gentle Reminder"}</h3>
-            
-            {editingId && <div style={{background:'#fff8e1', padding:'8px 12px', borderRadius:'10px', fontSize:'13px', marginBottom:'12px', border:'1px solid #ffe082'}}>Editing mode: Change time or medicine name, then click Update</div>}
-
-            {/* ✅ REMOVED DROPDOWN - Now only 2 inputs */}
-            <input className="input-modern" placeholder="Medicine name e.g. BP Tablet, Breakfast" value={title} onChange={e=>setTitle(e.target.value)} />
-            <input type="time" className="input-modern" value={time} onChange={e=>setTime(e.target.value)} />
-            
-            <button className="btn-primary btn-green" onClick={handleAddOrUpdate}>
-              {editingId ? "✅ Update Reminder" : "+ Add Reminder with Love"}
-            </button>
-            {editingId && <button className="btn-primary" style={{background:'white', border:'1.5px solid #e0e0e0', marginTop:'8px'}} onClick={cancelEdit}>Cancel Edit</button>}
-
-            <div style={{marginTop:'18px'}}>
-              <h4 style={{fontSize:'14px', color:'#78947b', margin:'0 0 10px'}}>📋 Live Reminders for Patient (FAM001)</h4>
-              {reminders.length === 0 ? (
-                <p style={{textAlign:'center', color:'#aaa', padding:'16px', background:'#f9fdf9', borderRadius:'12px'}}>No reminders yet. Add one above ☝️</p>
-              ) : (
-                reminders.map((r)=>(
-                  <div key={r.id} className="list-item" style={{background: r.is_done ? '#e8f5e9' : '#fffef5'}}>
-                    <div style={{flex:1}}>
-                      <div style={{fontWeight:'600'}}>{r.title} {r.is_done && "✅"}</div>
-                      <div style={{fontSize:'12px', color:'#78947b'}}>⏰ {r.time} • {r.is_done ? 'Done by Patient' : 'Pending'}</div>
-                    </div>
-                    <div style={{display:'flex', gap:'6px', alignItems:'center'}}>
-                      <span className="badge badge-time">{r.time}</span>
-                      <button onClick={()=>startEdit(r)} style={{padding:'5px 10px', borderRadius:'8px', border:'1.5px solid #c8e6c9', background:'white', cursor:'pointer', fontSize:'12px', fontWeight:'600', color:'#2e7d32'}}>Edit</button>
-                      <button onClick={()=>deleteReminder(r.id)} style={{padding:'5px 10px', borderRadius:'8px', border:'none', background:'#ffebee', cursor:'pointer', fontSize:'12px', color:'#c62828'}}>🗑️</button>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          <div>
-            <div className="glass-card" style={{marginBottom:'20px'}}>
-              <h3>💝 Family Connect</h3>
-              <div className="upload-zone">Drop family photo here<br/><small style={{color:'#888'}}>JPG, PNG up to 5MB</small></div>
-              <input className="input-modern" placeholder="Title e.g. Diwali 2024 at Home" />
-              <textarea className="input-modern" rows={2} placeholder="Add a sweet memory note..."></textarea>
-              <button className="btn-primary btn-orange">Share Memory → Patient Sees Instantly</button>
-              <div className="memory-grid">
-                {memories.map((m,i)=>(
-                  <div key={i} className="memory"><img src={m.img} alt="" /><span>{m.title}</span></div>
-                ))}
-              </div>
-            </div>
-            <div className="glass-card">
-              <h3>📊 Patient Status Today</h3>
-              <div style={{background:'#f6fbf7', padding:'14px', borderRadius:'12px', lineHeight:'1.8', fontSize:'14px'}}>
-                Total: <b>{reminders.length}</b><br/>
-                Pending: <b style={{color:'#e65100'}}>{activeCount}</b><br/>
-                Done: <b style={{color:'#2e7d32'}}>{doneCount}</b><br/>
-                <div style={{marginTop:'10px', padding:'10px', borderRadius:'10px', background: activeCount===0 && reminders.length>0 ? '#e8f5e9' : '#fff8e1', border:'1px solid #e0e0e0'}}>
-                  {reminders.length===0 ? "Add first reminder above" : activeCount===0 ? "🎉 All medicines taken! Patient is healthy today" : `⏳ Patient still has ${activeCount} medicine to take`}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
-    </>
+    </div>
   );
 }
